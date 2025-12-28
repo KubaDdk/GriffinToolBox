@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rijksregisternummer Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            color: white;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 1100px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            flex: 1;
+            min-width: 450px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-generate {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-generate:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-copy {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-copy:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .result-empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .info {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e6f3ff;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0066cc;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">Team Griffin Toolbox</h1>
+    <div class="main-wrapper">
+        <div class="container">
+            <h1>Rijksregisternummer Generator</h1>
+            
+            <div class="form-group">
+                <label for="birthdate">Geboortedatum (DD/MM/YYYY):</label>
+                <input type="text" id="birthdate" placeholder="bijv. 15/03/1985 (optioneel)">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="born1980">
+                <label for="born1980">Geboren in 1980?</label>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-generate" onclick="generateRRNR()">Genereer</button>
+                <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()" disabled>Kopieer</button>
+            </div>
+
+            <div class="result">
+                <div class="result-label">Gegenereerd Rijksregisternummer:</div>
+                <div class="result-value" id="result">
+                    <span class="result-empty">Klik op 'Genereer'</span>
+                </div>
+            </div>
+
+            <div class="info">
+                💡 Laat het datumveld leeg voor een willekeurige geboortedatum
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>Random IBAN Generator</h1>
+            
+            <div class="button-group">
+                <button class="btn-generate" onclick="generateIBAN()">Genereer</button>
+                <button class="btn-copy" id="copyBtnIban" onclick="copyIBANToClipboard()" disabled>Kopieer</button>
+            </div>
+
+            <div class="result">
+                <div class="result-label">Gegenereerd IBAN (België):</div>
+                <div class="result-value" id="resultIban">
+                    <span class="result-empty">Klik op 'Genereer'</span>
+                </div>
+            </div>
+
+            <div class="info">
+                🇧🇪 Genereert een geldig Belgisch IBAN nummer
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Gekopieerd naar klembord!</div>
+
+    <script>
+        let generatedRRNR = '';
+        let generatedIBAN = '';
+
+        function generateRRNR() {
+            const birthdateInput = document.getElementById('birthdate').value.trim();
+            const born1980 = document.getElementById('born1980').checked;
+            
+            let date;
+            
+            if (born1980) {
+                // Generate random date in 1980
+                const month = Math.floor(Math.random() * 12) + 1;
+                const daysInMonth = new Date(1980, month, 0).getDate();
+                const day = Math.floor(Math.random() * daysInMonth) + 1;
+                date = new Date(1980, month - 1, day);
+            } else if (birthdateInput) {
+                // Parse input date
+                const parts = birthdateInput.split('/');
+                if (parts.length !== 3) {
+                    alert('Ongeldige datum! Gebruik formaat DD/MM/YYYY');
+                    return;
+                }
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]);
+                const year = parseInt(parts[2]);
+                
+                if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                    alert('Ongeldige datum! Gebruik formaat DD/MM/YYYY');
+                    return;
+                }
+                
+                date = new Date(year, month - 1, day);
+                
+                if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+                    alert('Ongeldige datum!');
+                    return;
+                }
+            } else {
+                // Generate random date between 1920 and 2005
+                const year = Math.floor(Math.random() * 86) + 1920; // 1920-2005
+                const month = Math.floor(Math.random() * 12) + 1;
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const day = Math.floor(Math.random() * daysInMonth) + 1;
+                date = new Date(year, month - 1, day);
+            }
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            // Generate sequence number (001-999)
+            const sequenceNumber = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+            
+            // Calculate checksum
+            const yy = String(year).slice(-2);
+            const birthNumber = yy + month + day + sequenceNumber;
+            
+            let checksum;
+            if (year >= 2000) {
+                // For people born after 2000, prepend '2' for checksum calculation
+                const modNumber = parseInt('2' + birthNumber);
+                checksum = String(97 - (modNumber % 97)).padStart(2, '0');
+            } else {
+                const modNumber = parseInt(birthNumber);
+                checksum = String(97 - (modNumber % 97)).padStart(2, '0');
+            }
+            
+            // Format: YY.MM.DD-XXX.CC
+            generatedRRNR = `${yy}.${month}.${day}-${sequenceNumber}.${checksum}`;
+            
+            // Display result
+            document.getElementById('result').innerHTML = generatedRRNR;
+            document.getElementById('copyBtn').disabled = false;
+        }
+
+        function copyToClipboard() {
+            if (!generatedRRNR) return;
+            
+            navigator.clipboard.writeText(generatedRRNR).then(() => {
+                showToast();
+            }).catch(err => {
+                // Fallback method
+                const textarea = document.createElement('textarea');
+                textarea.value = generatedRRNR;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Allow Enter key to generate
+        document.getElementById('birthdate').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateRRNR();
+            }
+        });
+
+        // IBAN Generator Functions
+        function generateIBAN() {
+            // Generate 12 random digits for the account number
+            let accountNumber = '';
+            for (let i = 0; i < 12; i++) {
+                accountNumber += Math.floor(Math.random() * 10);
+            }
+            
+            // Calculate check digits for Belgian IBAN
+            // Format: BE + check digits + 12 digits
+            const checkDigits = calculateIBANCheckDigits('BE', accountNumber);
+            
+            // Format with spaces: BE68 5390 0754 7034
+            const iban = 'BE' + checkDigits + accountNumber;
+            generatedIBAN = formatIBAN(iban);
+            
+            // Display result
+            document.getElementById('resultIban').innerHTML = generatedIBAN;
+            document.getElementById('copyBtnIban').disabled = false;
+        }
+
+        function calculateIBANCheckDigits(countryCode, accountNumber) {
+            // Move country code and 00 to end, replace letters with numbers
+            const rearranged = accountNumber + countryCode + '00';
+            
+            // Replace letters with numbers (A=10, B=11, etc.)
+            let numericString = '';
+            for (let char of rearranged) {
+                if (char >= 'A' && char <= 'Z') {
+                    numericString += (char.charCodeAt(0) - 55).toString();
+                } else {
+                    numericString += char;
+                }
+            }
+            
+            // Calculate mod 97
+            let remainder = 0;
+            for (let i = 0; i < numericString.length; i++) {
+                remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
+            }
+            
+            const checkDigits = 98 - remainder;
+            return checkDigits.toString().padStart(2, '0');
+        }
+
+        function formatIBAN(iban) {
+            // Format: BE68 5390 0754 7034
+            return iban.match(/.{1,4}/g).join(' ');
+        }
+
+        function copyIBANToClipboard() {
+            if (!generatedIBAN) return;
+            
+            // Remove spaces for clipboard
+            const ibanWithoutSpaces = generatedIBAN.replace(/\s/g, '');
+            
+            navigator.clipboard.writeText(ibanWithoutSpaces).then(() => {
+                showToast();
+            }).catch(err => {
+                // Fallback method
+                const textarea = document.createElement('textarea');
+                textarea.value = ibanWithoutSpaces;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast();
+            });
+        }
+    </script>
+</body>
+</html>
