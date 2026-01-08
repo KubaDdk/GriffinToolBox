@@ -367,55 +367,69 @@
             }
         });
 
-        // IBAN Generator Functions
-        function generateIBAN() {
-            // Generate 12 random digits for the account number
-            let accountNumber = '';
-            for (let i = 0; i < 12; i++) {
-                accountNumber += Math.floor(Math.random() * 10);
-            }
-            
-            // Calculate check digits for Belgian IBAN
-            // Format: BE + check digits + 12 digits
-            const checkDigits = calculateIBANCheckDigits('BE', accountNumber);
-            
-            // Format with spaces: BE68 5390 0754 7034
-            const iban = 'BE' + checkDigits + accountNumber;
-            generatedIBAN = formatIBAN(iban);
-            
-            // Display result
-            document.getElementById('resultIban').innerHTML = generatedIBAN;
-            document.getElementById('copyBtnIban').disabled = false;
-        }
+     function generateIBAN() {
+    // Generate 3 random digits for bank code (001-999)
+    const bankCode = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+    
+    // Generate 7 random digits for account number
+    let accountNumber = '';
+    for (let i = 0; i < 7; i++) {
+        accountNumber += Math.floor(Math.random() * 10);
+    }
+    
+    // Calculate Belgian national check digits (mod 97)
+    const baseNumber = bankCode + accountNumber;
+    const nationalCheck = calculateBelgianCheckDigits(baseNumber);
+    
+    // Complete account number with national check
+    const fullAccountNumber = baseNumber + nationalCheck;
+    
+    // Calculate IBAN check digits
+    const ibanCheckDigits = calculateIBANCheckDigits('BE', fullAccountNumber);
+    
+    // Format with spaces: BE68 5390 0754 7034
+    const iban = 'BE' + ibanCheckDigits + fullAccountNumber;
+    generatedIBAN = formatIBAN(iban);
+    
+    // Display result
+    document.getElementById('resultIban').innerHTML = generatedIBAN;
+    document.getElementById('copyBtnIban').disabled = false;
+}
 
-        function calculateIBANCheckDigits(countryCode, accountNumber) {
-            // Move country code and 00 to end, replace letters with numbers
-            const rearranged = accountNumber + countryCode + '00';
-            
-            // Replace letters with numbers (A=10, B=11, etc.)
-            let numericString = '';
-            for (let char of rearranged) {
-                if (char >= 'A' && char <= 'Z') {
-                    numericString += (char.charCodeAt(0) - 55).toString();
-                } else {
-                    numericString += char;
-                }
-            }
-            
-            // Calculate mod 97
-            let remainder = 0;
-            for (let i = 0; i < numericString.length; i++) {
-                remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
-            }
-            
-            const checkDigits = 98 - remainder;
-            return checkDigits.toString().padStart(2, '0');
-        }
+function calculateBelgianCheckDigits(accountNumber) {
+    // Belgian check: 97 - (account number mod 97)
+    const number = parseInt(accountNumber);
+    const checkDigits = 97 - (number % 97);
+    return checkDigits.toString().padStart(2, '0');
+}
 
-        function formatIBAN(iban) {
-            // Format: BE68 5390 0754 7034
-            return iban.match(/.{1,4}/g).join(' ');
+function calculateIBANCheckDigits(countryCode, accountNumber) {
+    // Move country code and 00 to end
+    const rearranged = accountNumber + countryCode + '00';
+    
+    // Replace letters with numbers (A=10, B=11, etc.)
+    let numericString = '';
+    for (let char of rearranged) {
+        if (char >= 'A' && char <= 'Z') {
+            numericString += (char.charCodeAt(0) - 55).toString();
+        } else {
+            numericString += char;
         }
+    }
+    
+    // Calculate mod 97
+    let remainder = 0;
+    for (let i = 0; i < numericString.length; i++) {
+        remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
+    }
+    
+    const checkDigits = 98 - remainder;
+    return checkDigits.toString().padStart(2, '0');
+}
+
+function formatIBAN(iban) {
+    return iban.match(/.{1,4}/g).join(' ');
+}
 
         function copyIBANToClipboard() {
             if (!generatedIBAN) return;
