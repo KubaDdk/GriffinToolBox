@@ -367,42 +367,35 @@
             }
         });
 
-     function generateIBAN() {
-    // Generate 3 random digits for bank code (001-999)
+function generateIBAN() {
     const bankCode = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
     
-    // Generate 7 random digits for account number
     let accountNumber = '';
     for (let i = 0; i < 7; i++) {
         accountNumber += Math.floor(Math.random() * 10);
     }
     
-    // Calculate Belgian national check digits (mod 97)
-    const baseNumber = bankCode + accountNumber;
+    const baseNumber = bankCode + accountNumber;  // 10 cijfers
     const nationalCheck = calculateBelgianCheckDigits(baseNumber);
     
-    // Complete account number with national check
-    const fullAccountNumber = baseNumber + nationalCheck;
+    const fullBBAN = baseNumber + nationalCheck;
     
-    // Calculate IBAN check digits
-    const ibanCheckDigits = calculateIBANCheckDigits('BE', fullAccountNumber);
+    const ibanCheckDigits = calculateIBANCheckDigits('BE', fullBBAN);
     
-    // Format with spaces: BE68 5390 0754 7034
-    const iban = 'BE' + ibanCheckDigits + fullAccountNumber;
+    const iban = 'BE' + ibanCheckDigits + fullBBAN;
     generatedIBAN = formatIBAN(iban);
     
-    // Display result
     document.getElementById('resultIban').innerHTML = generatedIBAN;
     document.getElementById('copyBtnIban').disabled = false;
 }
 
 function calculateBelgianCheckDigits(accountNumber) {
     const number = parseInt(accountNumber);
-    let checkDigits = 97 - (number % 97);
+    let checkDigits = number % 97;
     
-    // Belgian check digits must be 01-96, never 97
-    if (checkDigits === 97) {
-        checkDigits = 96;
+    // If remainder is 0, check digit is 97
+    if (checkDigits === 0) {
+        checkDigits = 97;
     }
     
     return checkDigits.toString().padStart(2, '0');
