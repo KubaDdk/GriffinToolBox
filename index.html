@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rijksregisternummer Generator</title>
+    <title>Griffin for the win</title>
     <style>
         * {
             margin: 0;
@@ -144,6 +144,23 @@
             transform: none;
         }
 
+        .btn-copy-simple {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-copy-simple:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
+        }
+
+        .btn-copy-simple:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .result {
             background: #f7fafc;
             padding: 20px;
@@ -220,6 +237,7 @@
             <div class="button-group">
                 <button class="btn-generate" onclick="generateRRNR()">Genereer</button>
                 <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()" disabled>Kopieer</button>
+                <button class="btn-copy-simple" id="copyBtnSimple" onclick="copySimpleToClipboard()" disabled>Kopieer eenvoudig</button>
             </div>
 
             <div class="result">
@@ -240,6 +258,7 @@
             <div class="button-group">
                 <button class="btn-generate" onclick="generateIBAN()">Genereer</button>
                 <button class="btn-copy" id="copyBtnIban" onclick="copyIBANToClipboard()" disabled>Kopieer</button>
+                <button class="btn-copy-simple" id="copyBtnIbanSimple" onclick="copyIBANSimpleToClipboard()" disabled>Kopieer eenvoudig</button>
             </div>
 
             <div class="result">
@@ -331,6 +350,10 @@
             // Display result
             document.getElementById('result').innerHTML = generatedRRNR;
             document.getElementById('copyBtn').disabled = false;
+            document.getElementById('copyBtnSimple').disabled = false;
+            
+            // Auto-copy to clipboard
+            copyToClipboard();
         }
 
         function copyToClipboard() {
@@ -342,6 +365,28 @@
                 // Fallback method
                 const textarea = document.createElement('textarea');
                 textarea.value = generatedRRNR;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast();
+            });
+        }
+
+        function copySimpleToClipboard() {
+            if (!generatedRRNR) return;
+            
+            // Remove dots and dashes
+            const simpleFormat = generatedRRNR.replace(/[.\-]/g, '');
+            
+            navigator.clipboard.writeText(simpleFormat).then(() => {
+                showToast();
+            }).catch(err => {
+                // Fallback method
+                const textarea = document.createElement('textarea');
+                textarea.value = simpleFormat;
                 textarea.style.position = 'fixed';
                 textarea.style.opacity = '0';
                 document.body.appendChild(textarea);
@@ -367,80 +412,103 @@
             }
         });
 
-function generateIBAN() {
-    const bankCode = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
-    
-    let accountNumber = '';
-    for (let i = 0; i < 7; i++) {
-        accountNumber += Math.floor(Math.random() * 10);
-    }
-    
-    const baseNumber = bankCode + accountNumber;  // 10 cijfers
-    const nationalCheck = calculateBelgianCheckDigits(baseNumber);
-    
-    const fullBBAN = baseNumber + nationalCheck;
-    
-    const ibanCheckDigits = calculateIBANCheckDigits('BE', fullBBAN);
-    
-    const iban = 'BE' + ibanCheckDigits + fullBBAN;
-    generatedIBAN = formatIBAN(iban);
-    
-    document.getElementById('resultIban').innerHTML = generatedIBAN;
-    document.getElementById('copyBtnIban').disabled = false;
-}
-
-function calculateBelgianCheckDigits(accountNumber) {
-    const number = parseInt(accountNumber);
-    let checkDigits = number % 97;
-    
-    // If remainder is 0, check digit is 97
-    if (checkDigits === 0) {
-        checkDigits = 97;
-    }
-    
-    return checkDigits.toString().padStart(2, '0');
-}
-
-function calculateIBANCheckDigits(countryCode, accountNumber) {
-    // Move country code and 00 to end
-    const rearranged = accountNumber + countryCode + '00';
-    
-    // Replace letters with numbers (A=10, B=11, etc.)
-    let numericString = '';
-    for (let char of rearranged) {
-        if (char >= 'A' && char <= 'Z') {
-            numericString += (char.charCodeAt(0) - 55).toString();
-        } else {
-            numericString += char;
+        function generateIBAN() {
+            const bankCode = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+            
+            let accountNumber = '';
+            for (let i = 0; i < 7; i++) {
+                accountNumber += Math.floor(Math.random() * 10);
+            }
+            
+            const baseNumber = bankCode + accountNumber;  // 10 cijfers
+            const nationalCheck = calculateBelgianCheckDigits(baseNumber);
+            
+            const fullBBAN = baseNumber + nationalCheck;
+            
+            const ibanCheckDigits = calculateIBANCheckDigits('BE', fullBBAN);
+            
+            const iban = 'BE' + ibanCheckDigits + fullBBAN;
+            generatedIBAN = formatIBAN(iban);
+            
+            document.getElementById('resultIban').innerHTML = generatedIBAN;
+            document.getElementById('copyBtnIban').disabled = false;
+            document.getElementById('copyBtnIbanSimple').disabled = false;
+            
+            // Auto-copy to clipboard
+            copyIBANToClipboard();
         }
-    }
-    
-    // Calculate mod 97
-    let remainder = 0;
-    for (let i = 0; i < numericString.length; i++) {
-        remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
-    }
-    
-    const checkDigits = 98 - remainder;
-    return checkDigits.toString().padStart(2, '0');
-}
 
-function formatIBAN(iban) {
-    return iban.match(/.{1,4}/g).join(' ');
-}
+        function calculateBelgianCheckDigits(accountNumber) {
+            const number = parseInt(accountNumber);
+            let checkDigits = number % 97;
+            
+            // If remainder is 0, check digit is 97
+            if (checkDigits === 0) {
+                checkDigits = 97;
+            }
+            
+            return checkDigits.toString().padStart(2, '0');
+        }
+
+        function calculateIBANCheckDigits(countryCode, accountNumber) {
+            // Move country code and 00 to end
+            const rearranged = accountNumber + countryCode + '00';
+            
+            // Replace letters with numbers (A=10, B=11, etc.)
+            let numericString = '';
+            for (let char of rearranged) {
+                if (char >= 'A' && char <= 'Z') {
+                    numericString += (char.charCodeAt(0) - 55).toString();
+                } else {
+                    numericString += char;
+                }
+            }
+            
+            // Calculate mod 97
+            let remainder = 0;
+            for (let i = 0; i < numericString.length; i++) {
+                remainder = (remainder * 10 + parseInt(numericString[i])) % 97;
+            }
+            
+            const checkDigits = 98 - remainder;
+            return checkDigits.toString().padStart(2, '0');
+        }
+
+        function formatIBAN(iban) {
+            return iban.match(/.{1,4}/g).join(' ');
+        }
 
         function copyIBANToClipboard() {
             if (!generatedIBAN) return;
             
-            // Remove spaces for clipboard
-            const ibanWithoutSpaces = generatedIBAN.replace(/\s/g, '');
-            
-            navigator.clipboard.writeText(ibanWithoutSpaces).then(() => {
+            navigator.clipboard.writeText(generatedIBAN).then(() => {
                 showToast();
             }).catch(err => {
                 // Fallback method
                 const textarea = document.createElement('textarea');
-                textarea.value = ibanWithoutSpaces;
+                textarea.value = generatedIBAN;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast();
+            });
+        }
+
+        function copyIBANSimpleToClipboard() {
+            if (!generatedIBAN) return;
+            
+            // Remove spaces for simple format
+            const simpleFormat = generatedIBAN.replace(/\s/g, '');
+            
+            navigator.clipboard.writeText(simpleFormat).then(() => {
+                showToast();
+            }).catch(err => {
+                // Fallback method
+                const textarea = document.createElement('textarea');
+                textarea.value = simpleFormat;
                 textarea.style.position = 'fixed';
                 textarea.style.opacity = '0';
                 document.body.appendChild(textarea);
