@@ -216,10 +216,59 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ── Walking cat ── */
+        .cat-stage {
+            position: relative;
+            max-width: 1100px;
+            width: 100%;
+            height: 55px;
+            margin-bottom: -12px;
+            overflow: hidden;
+        }
+
+        .cat-runner {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+
+        .cat-emoji {
+            display: inline-block;
+            font-size: 38px;
+            line-height: 1;
+            animation: cat-bounce 0.35s ease-in-out infinite alternate;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cat-emoji.cat-jumping {
+            animation: cat-jump 0.6s ease-out forwards !important;
+        }
+
+        @keyframes cat-bounce {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-7px); }
+        }
+
+        @keyframes cat-jump {
+            0%   { transform: translateY(0); }
+            35%  { transform: translateY(-21px); }
+            65%  { transform: translateY(-21px); }
+            100% { transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
     <h1 class="page-title">Team Griffin Toolbox</h1>
+    <div class="cat-stage">
+        <div class="cat-runner">
+            <div class="cat-flip">
+                <span class="cat-emoji">🐈</span>
+            </div>
+        </div>
+    </div>
     <div class="main-wrapper">
         <div class="container">
             <h1>Rijksregisternummer Generator</h1>
@@ -518,6 +567,61 @@
                 showToast();
             });
         }
+
+        // ── Walking cat logic ──
+        (function () {
+            const runner  = document.querySelector('.cat-runner');
+            const flip    = document.querySelector('.cat-flip');
+            const emoji   = document.querySelector('.cat-emoji');
+            const stage   = document.querySelector('.cat-stage');
+
+            const SPEED = 1.5; // px per frame
+            let pos  = 0;
+            let dir  = 1;  // 1 = right, -1 = left
+            let jumping = false;
+
+            function maxPos() {
+                return stage.offsetWidth - 55;
+            }
+
+            function applyFlip() {
+                // 🐈 faces left by default → scaleX(-1) faces right
+                flip.style.transform = dir === 1 ? 'scaleX(-1)' : 'scaleX(1)';
+            }
+
+            applyFlip();
+
+            function tick() {
+                pos += dir * SPEED;
+                const max = maxPos();
+                if (pos >= max) { pos = max; dir = -1; applyFlip(); }
+                if (pos <= 0)   { pos = 0;   dir =  1; applyFlip(); }
+                runner.style.left = pos + 'px';
+                requestAnimationFrame(tick);
+            }
+
+            requestAnimationFrame(tick);
+
+            emoji.addEventListener('click', () => {
+                // Reverse direction
+                dir = -dir;
+                applyFlip();
+
+                // Temporarily swap to weary cat 🙀 for 0.5s
+                emoji.textContent = '🙀';
+                setTimeout(() => { emoji.textContent = '🐈'; }, 500);
+
+                // One-shot jump (3× normal bounce height)
+                if (!jumping) {
+                    jumping = true;
+                    emoji.classList.add('cat-jumping');
+                    emoji.addEventListener('animationend', () => {
+                        emoji.classList.remove('cat-jumping');
+                        jumping = false;
+                    }, { once: true });
+                }
+            });
+        })();
     </script>
 </body>
 </html>
